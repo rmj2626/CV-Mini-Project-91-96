@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exercise Form Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        select, button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        #videoFeed {
+            width: 1280px;
+            height: 720px;
+            background-color: #000;
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .status {
+            margin-top: 10px;   
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .feedback-text {
+        font-size: 24px;
+        font-weight: bold;
+        color: red;
+        margin-bottom: 15px;  /* Space between feedback and video */
+        }
+    </style>
+</head>
+<body>
+    <h1>Exercise Form Analysis</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Select video file:</label><br>
+            <input type="file" id="file" name="file" accept=".mp4,.avi,.mov" required>
+        </div>
+        <div class="form-group">
+            <label for="exercise_type">Select exercise type:</label><br>
+            <select id="exercise_type" name="exercise_type" required>
+                <option value="squat">Squat</option>
+                <option value="pushup">Push-up</option>
+                <option value="plank">Plank</option>
+                <option value="bicep_curl">Bicep Curl</option>
+            </select>
+        </div>
+        <button type="submit">Upload and Analyze</button>
+    </form>
+    
+    <div id="status" class="status hidden"></div>
+
+    <!-- Place this div above the video feed for feedback display -->
+    <div id="feedbackText" class="feedback-text hidden"></div>
+    
+    <img id="videoFeed" src="{{ url_for('video_feed') }}" class="hidden">
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const status = document.getElementById('status');
+        const videoFeed = document.getElementById('videoFeed');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    status.textContent = data.message;
+                    status.classList.remove('hidden', 'error');
+                    status.classList.add('success');
+                    videoFeed.classList.remove('hidden');
+                } else {
+                    status.textContent = data.error;
+                    status.classList.remove('hidden', 'success');
+                    status.classList.add('error');
+                }
+            } catch (error) {
+                status.textContent = 'An error occurred during upload';
+                status.classList.remove('hidden', 'success');
+                status.classList.add('error');
+            }
+        });
+
+        // Clean up when leaving the page
+        window.addEventListener('beforeunload', async () => {
+            try {
+                await fetch('/stop_processing', { method: 'POST' });
+            } catch (error) {
+                console.error('Error stopping video processing:', error);
+            }
+        });
+
+        function updateFeedback(feedbackText) {
+            const feedbackDiv = document.getElementById('feedbackText');
+            feedbackDiv.textContent = feedbackText;
+            feedbackDiv.classList.remove('hidden');
+        }
+
+        async function fetchFeedback() {
+            try {
+                const response = await fetch('/update_feedback', { method: 'POST' });
+                const data = await response.json();
+                if (data.feedback) {
+                    updateFeedback(data.feedback);
+                }
+            } catch (error) {
+                console.error('Error fetching feedback:', error);
+            }
+        }
+
+        setInterval(fetchFeedback, 1000); // Polling every second
+    </script>
+</body>
+</html>
