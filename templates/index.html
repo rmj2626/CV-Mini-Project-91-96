@@ -42,6 +42,7 @@
         font-size: 24px;
         font-weight: bold;
         color: red;
+        margin-top: 15px;  /* Space between video and feedback */
         margin-bottom: 15px;  /* Space between feedback and video */
         }
     </style>
@@ -124,7 +125,10 @@
 
         async function fetchFeedback() {
             try {
-                const response = await fetch('/update_feedback', { method: 'POST' });
+                const response = await fetch('/get_feedback');  // Use GET instead of POST
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.json();
                 if (data.feedback) {
                     updateFeedback(data.feedback);

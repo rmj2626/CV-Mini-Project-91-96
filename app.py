@@ -286,9 +286,9 @@ class PoseDetector:
         feedback = ""
         if exercise == "squat":
             if angle < 90:
-                feedback = "Go lower for squat"
-            elif angle > 100:
                 feedback = "Too deep"
+            elif angle > 100:
+                feedback = "Go lower for squat"
             else:
                 feedback = "Good form, continue!"
         elif exercise == "pushup":
@@ -414,7 +414,7 @@ def stop_processing():
     return jsonify({"message": "Processing stopped"})
 
 # Route to provide the current feedback
-@app.route('/get_feedback')
+@app.route('/get_feedback', methods=['GET'])
 def get_feedback():
     global current_feedback
     return jsonify({"feedback": current_feedback})
